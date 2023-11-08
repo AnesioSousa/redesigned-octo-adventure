@@ -37,6 +37,26 @@ app.get("/todos", async (req, res) => {
   }
 });
 
+//get a todo by id
+
+app.get("/todos/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { rows } = await pool.query("SELECT * FROM todo WHERE todo_id = $1", [
+      id,
+    ]);
+
+    if (rows.length === 0) {
+      res.status(404).json({ error: "Todo not found" });
+    } else {
+      res.status(200).json(rows);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 //update a todos
 
 app.listen(5000, () => {

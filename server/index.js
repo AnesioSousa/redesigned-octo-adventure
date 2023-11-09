@@ -38,7 +38,6 @@ app.get("/todos", async (req, res) => {
 });
 
 //get a todo by id
-
 app.get("/todos/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -58,6 +57,26 @@ app.get("/todos/:id", async (req, res) => {
 });
 
 //update a todos
+app.put("/todos/:id", async (req, res) => {
+  const { description } = req.body;
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    await pool.query("UPDATE todo SET description = $1 WHERE todo_id = $2", [
+      description,
+      id,
+    ]);
+    res.status(200).json({
+      todo_id: id,
+      description: description,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//delete a todo
 
 app.listen(5000, () => {
   console.log("server has started on port 5000");

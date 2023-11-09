@@ -12,7 +12,7 @@ app.use(express.json());
 app.get("/todos", async (req, res) => {
   try {
     const todoList = await pool.query("SELECT * FROM todo ORDER BY todo_id");
-    res.status(200).json(todoList.rows);
+    res.status(200).json(todoList.rows[0]);
   } catch (error) {
     console.error(err);
     res.status(500);
@@ -87,12 +87,16 @@ app.put("/todos/:id", async (req, res) => {
 
 //delete a todo
 app.delete("/todos/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
   try {
-    const id = parseInt(req.params.id, 10);
-    const aux = "deletedObject";
-    await pool.query("DELETE FROM todo WHERE todo_id = $1", [id]);
+    const rows = await getTodoById(id);
 
-    res.status(200).json(aux);
+    if (rows.length === 0) {
+      res.status(404).json({ error: "Todo not found" });
+    } else {
+      pool.query("DELETE FROM todo WHERE todo_id = $1", [rows[0].todo_id]);
+      res.status(200).json(rows[0]);
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json(err.message);

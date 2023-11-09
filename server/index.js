@@ -8,6 +8,46 @@ app.use(cors());
 
 app.use(express.json());
 
+//get all todos
+app.get("/todos", async (req, res) => {
+  try {
+    const todoList = await pool.query("SELECT * FROM todo ORDER BY todo_id");
+    res.status(200).json(todoList.rows);
+  } catch (error) {
+    console.error(err);
+    res.status(500);
+  }
+});
+
+async function getTodoById(id) {
+  try {
+    const { rows } = await pool.query("SELECT * FROM todo WHERE todo_id = $1", [
+      id,
+    ]);
+
+    return rows;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+//get a todo by id
+app.get("/todos/:id", async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const rows = await getTodoById(id);
+
+    if (rows.length === 0) {
+      res.status(404).json({ error: "Todo not found" });
+    } else {
+      res.status(200).json(rows);
+    }
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//create a todo
 app.post("/todos", async (req, res) => {
   try {
     const { description } = req.body;
@@ -25,38 +65,7 @@ app.post("/todos", async (req, res) => {
   }
 });
 
-//get all todos
-
-app.get("/todos", async (req, res) => {
-  try {
-    const todoList = await pool.query("SELECT * FROM todo");
-    res.status(200).json(todoList.rows);
-  } catch (error) {
-    console.error(err);
-    res.status(500);
-  }
-});
-
-//get a todo by id
-app.get("/todos/:id", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    const { rows } = await pool.query("SELECT * FROM todo WHERE todo_id = $1", [
-      id,
-    ]);
-
-    if (rows.length === 0) {
-      res.status(404).json({ error: "Todo not found" });
-    } else {
-      res.status(200).json(rows);
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-//update a todos
+//update a todo
 app.put("/todos/:id", async (req, res) => {
   const { description } = req.body;
   try {
@@ -77,6 +86,18 @@ app.put("/todos/:id", async (req, res) => {
 });
 
 //delete a todo
+app.delete("/todos/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const aux = "deletedObject";
+    await pool.query("DELETE FROM todo WHERE todo_id = $1", [id]);
+
+    res.status(200).json(aux);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(err.message);
+  }
+});
 
 app.listen(5000, () => {
   console.log("server has started on port 5000");
